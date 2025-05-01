@@ -14,7 +14,7 @@ import {
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
-export default function ProblemDetail({ db, problemId, refresh }) {
+export default function ProblemDetail({ db, problemId, refreshProblems }) {
   const [p, setP] = useState(null)
   const [tab, setTab] = useState('Observations')
   const [editTitle, setEditTitle] = useState(false)
@@ -24,7 +24,6 @@ export default function ProblemDetail({ db, problemId, refresh }) {
   const [time, setTime] = useState(0)
   const [running, setRunning] = useState(false)
   const timer = useRef(null)
-  const [reminder, setReminder] = useState(null)
 
   // fetch problem
   useEffect(() => {
@@ -36,7 +35,6 @@ export default function ProblemDetail({ db, problemId, refresh }) {
       setURL(data.url||'')
       setTime(data.timeSpent||0)
       setRunning(!data.solved)
-      setReminder(data.reminder ? new Date(data.reminder) : null)
     })
     return () => { mounted=false; clearInterval(timer.current) }
   }, [db, problemId])
@@ -58,7 +56,7 @@ export default function ProblemDetail({ db, problemId, refresh }) {
 
   function persist(fields) {
     const updated = { ...p, ...fields }
-    db.put('problems', updated).then(() => { setP(updated); refresh() })
+    db.put('problems', updated).then(() => { setP(updated); refreshProblems() })
   }
 
   function toggleSolved() {
@@ -70,9 +68,7 @@ export default function ProblemDetail({ db, problemId, refresh }) {
     setTime(0); persist({ timeSpent: 0 })
   }
 
-  function saveReminder() {
-    persist({ reminder: reminder ? reminder.toISOString() : null, reminderNotified: false })
-  }
+
 
   function fmt(sec) {
     const h = String(Math.floor(sec/3600)).padStart(2,'0')
@@ -139,20 +135,7 @@ export default function ProblemDetail({ db, problemId, refresh }) {
         )}
       </div>
 
-      {/* reminder */}
-      <div className="space-y-2">
-        <h3 className="font-semibold">Set Reminder</h3>
-        <div className="flex items-center space-x-2">
-          <DatePicker
-            selected={reminder}
-            onChange={setReminder}
-            showTimeSelect
-            dateFormat="Pp"
-            className="p-2 border rounded-lg"
-          />
-          <button onClick={saveReminder} className="px-3 py-1 bg-green-500 text-white rounded">Save</button>
-        </div>
-      </div>
+
 
       {/* tabs */}
       <div className="flex space-x-4 border-b">
