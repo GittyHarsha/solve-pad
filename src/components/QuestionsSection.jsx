@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react'
+// src/components/QuestionsSection.jsx
+import React, { useState, useEffect } from 'react';
 
 export default function QuestionsSection({ questions, onSave }) {
   const [list, setList] = useState(() =>
     questions && Array.isArray(questions) ? [...questions, ''] : ['']
-  )
+  );
 
   // Keep last block empty always
   useEffect(() => {
     if (list.length === 0 || list[list.length - 1].trim() !== '') {
-      setList((prev) => [...prev, ''])
+      setList((prev) => [...prev, '']);
     }
-  }, [list])
+  }, [list]);
 
   const handleChange = (i, val) => {
-    const updated = [...list]
-    updated[i] = val
-    setList(updated)
-  }
+    const updated = [...list];
+    updated[i] = val;
+    setList(updated);
+  };
 
   const handleDelete = (i) => {
-    if (list.length <= 1) return
-    const updated = list.filter((_, idx) => idx !== i)
-    setList(updated)
-  }
+    const updated = list.filter((_, idx) => idx !== i);
+    setList(updated);
+  };
 
   const handleSave = () => {
-    const filtered = list.map((l) => l.trim()).filter(Boolean)
-    onSave(filtered)
-  }
+    const filtered = list.map((l) => l.trim()).filter(Boolean);
+    onSave(filtered);
+  };
 
   return (
     <div className="space-y-4 p-4">
@@ -59,5 +59,5 @@ export default function QuestionsSection({ questions, onSave }) {
         Save
       </button>
     </div>
-  )
+  );
 }
