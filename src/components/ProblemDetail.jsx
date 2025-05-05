@@ -149,7 +149,7 @@ export default function ProblemDetail({ db, problemId, refreshProblems }) {
         {['Observations','Approaches','Known Facts','Scratch Pad','Questions'].map(t => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onMouseEnter={() => setTab(t)}
             className={`pb-2 ${tab===t ? 'border-b-2 border-blue-500' : 'text-gray-500'}`}
           >
             {t}

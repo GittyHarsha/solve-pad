@@ -64,22 +64,6 @@ export default function ProblemList({
       console.error('Delete failed:', err)
     }
   }
-
-  // Toggle solved state
-  async function toggleSolved(id, solved) {
-    if (!db) return
-    const prob = problems.find((p) => p.id === id)
-    if (!prob) return
-    try {
-      const tx = db.transaction('problems', 'readwrite')
-      await tx.objectStore('problems').put({ ...prob, solved: !solved })
-      await tx.done
-      refreshProblems()
-    } catch (err) {
-      console.error('Toggle failed:', err)
-    }
-  }
-
   // Export all problems
   async function exportData() {
     if (!db) return
@@ -213,12 +197,6 @@ export default function ProblemList({
                 <span className="font-medium">{p.title}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => toggleSolved(p.id, p.solved)}
-                  className="text-sm text-purple-600 hover:underline"
-                >
-                  {p.solved ? 'Unsolve' : 'Solve'}
-                </button>
                 <button
                   onClick={() => deleteProblem(p.id)}
                   className="text-red-500 hover:text-red-600"

@@ -1,43 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
-import debounce from 'lodash.debounce'
+// src/components/KnownFactsSection.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
-export default function KnownFactsSection({ knownFacts, onSave }) {
-  const [value, setValue] = useState(knownFacts ?? '')
-  const valueRef = useRef(value)
+// Debounce utility
+function useDebouncedCallback(callback, delay) {
+  const timeoutRef = useRef(null);
+  const savedCb = useRef(callback);
 
-  // Update ref on every change to avoid stale closures
   useEffect(() => {
-    valueRef.current = value
-  }, [value])
+    savedCb.current = callback;
+  }, [callback]);
 
-  // Safe debounce with ref
-  const debouncedSave = useRef(
-    debounce(() => {
-      onSave(valueRef.current)
-    }, 1000)
-  ).current
+  return (...args) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      savedCb.current(...args);
+    }, delay);
+  };
+}
 
-  // Clean up on unmount
+export default function KnownFactsSection({ knownFacts = '', onSave }) {
+  const [value, setValue] = useState(knownFacts);
+  const valueRef = useRef(value);
+
+  // Keep ref updated
   useEffect(() => {
-    return () => {
-      debouncedSave.cancel()
-    }
-  }, [debouncedSave])
+    valueRef.current = value;
+  }, [value]);
 
-  // Sync prop on change
+  // Sync when prop changes
   useEffect(() => {
-    const initial = knownFacts ?? ''
-    setValue(initial)
-    valueRef.current = initial
-  }, [knownFacts])
+    setValue(knownFacts);
+    valueRef.current = knownFacts;
+  }, [knownFacts]);
 
-  const handleChange = (val) => {
-    setValue(val)
-    valueRef.current = val
-    debouncedSave()
-  }
+  // Debounce save to parent
+  const debouncedSave = useDebouncedCallback(() => {
+    onSave(valueRef.current);
+  }, 1000);
+
+  // Cancel on unmount
+  useEffect(() => () => debouncedSave.cancel && debouncedSave.cancel(), [debouncedSave]);
+
+  const handleChange = (content) => {
+    setValue(content);
+    debouncedSave();
+  };
 
   return (
     <div className="p-4 space-y-2">
@@ -50,5 +59,5 @@ export default function KnownFactsSection({ knownFacts, onSave }) {
         className="bg-white rounded border"
       />
     </div>
-  )
+  );
 }

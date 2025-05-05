@@ -1,32 +1,54 @@
 // src/components/QuestionsSection.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-export default function QuestionsSection({ questions, onSave }) {
-  const [list, setList] = useState(() =>
-    questions && Array.isArray(questions) ? [...questions, ''] : ['']
-  );
-
-  // Keep last block empty always
+function useDebouncedCallback(callback, delay) {
+  const timeoutRef = useRef(null);
+  const saved = useRef(callback);
   useEffect(() => {
-    if (list.length === 0 || list[list.length - 1].trim() !== '') {
-      setList((prev) => [...prev, '']);
-    }
-  }, [list]);
+    saved.current = callback;
+  }, [callback]);
+  return (...args) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      saved.current(...args);
+    }, delay);
+  };
+}
+
+export default function QuestionsSection({ questions = [], onSave }) {
+  // always keep one empty slot at the end
+  const [list, setList] = useState(() =>
+    Array.isArray(questions) ? [...questions, ''] : ['']
+  );
+  const listRef = useRef(list);
+  listRef.current = list;
+
+  // sync on prop change
+  useEffect(() => {
+    setList(Array.isArray(questions) ? [...questions, ''] : ['']);
+  }, [questions]);
+
+  // debounce save of non-empty entries
+  const debouncedSave = useDebouncedCallback(() => {
+    const filtered = listRef.current.map((q) => q.trim()).filter(Boolean);
+    onSave(filtered);
+  }, 500);
 
   const handleChange = (i, val) => {
-    const updated = [...list];
+    let updated = [...listRef.current];
     updated[i] = val;
+    // if typing into the last slot and not empty, append a new empty one
+    if (i === listRef.current.length - 1 && val.trim() !== '') {
+      updated = [...updated, ''];
+    }
     setList(updated);
+    debouncedSave();
   };
 
   const handleDelete = (i) => {
-    const updated = list.filter((_, idx) => idx !== i);
+    const updated = listRef.current.filter((_, idx) => idx !== i);
     setList(updated);
-  };
-
-  const handleSave = () => {
-    const filtered = list.map((l) => l.trim()).filter(Boolean);
-    onSave(filtered);
+    debouncedSave();
   };
 
   return (
@@ -41,23 +63,18 @@ export default function QuestionsSection({ questions, onSave }) {
             placeholder={`Question ${i + 1}`}
             className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {list.length > 1 && i !== list.length - 1 && (
+          {/* show delete only on non-last filled slots */}
+          {i < list.length - 1 && (
             <button
               onClick={() => handleDelete(i)}
               className="absolute right-2 top-2 text-red-500 text-sm opacity-0 group-hover:opacity-100 transition"
+              title="Delete question"
             >
               🗑
             </button>
           )}
         </div>
       ))}
-
-      <button
-        onClick={handleSave}
-        className="bg-primary text-white px-4 py-2 rounded-full"
-      >
-        Save
-      </button>
     </div>
   );
 }
